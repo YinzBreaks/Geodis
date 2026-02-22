@@ -15,11 +15,27 @@ export const DEFAULT_CERTIFICATION_CONFIG = {
 function createRejectedByErrorMap() {
     return Object.fromEntries(ERROR_CODES.map((code) => [code, 0]));
 }
-function isPickAcceptedEvent(event) {
-    return event.type === "STEP_ACCEPTED" && PICK_ACTION_TYPES.includes(event.payload.acceptedType);
+function getRelatedActionType(eventLog, index) {
+    for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+        const type = eventLog[cursor].type;
+        if (type !== "STEP_ACCEPTED" && type !== "STEP_REJECTED" && type !== "ERROR") {
+            return type;
+        }
+    }
+    return null;
 }
-function isPickRejectedEvent(event) {
-    return event.type === "STEP_REJECTED" && PICK_ACTION_TYPES.includes(event.payload.rejectedType);
+function isPickAcceptedEvent(eventLog, index) {
+    const event = eventLog[index];
+    const relatedType = event.payload.acceptedType ?? getRelatedActionType(eventLog, index);
+    return event.type === "STEP_ACCEPTED" && relatedType !== null && PICK_ACTION_TYPES.includes(relatedType);
+}
+function isPickRejectedEvent(eventLog, index) {
+    const event = eventLog[index];
+    if (event.type !== "STEP_REJECTED") {
+        return false;
+    }
+    const relatedType = event.payload.rejectedType ?? getRelatedActionType(eventLog, index);
+    return relatedType !== undefined && PICK_ACTION_TYPES.includes(relatedType);
 }
 export function scoreSession(eventLog, config) {
     const effectiveConfig = {
@@ -31,12 +47,13 @@ export function scoreSession(eventLog, config) {
     let totalRejected = 0;
     let criticalSequenceViolations = 0;
     const rejectedByError = createRejectedByErrorMap();
-    for (const event of eventLog) {
+    for (let index = 0; index < eventLog.length; index += 1) {
+        const event = eventLog[index];
         if (event.type !== "STEP_REJECTED" && event.type !== "STEP_ACCEPTED") {
             continue;
         }
         if (event.type === "STEP_ACCEPTED") {
-            if (isPickAcceptedEvent(event)) {
+            if (isPickAcceptedEvent(eventLog, index)) {
                 acceptedPickActions += 1;
             }
             continue;
@@ -44,7 +61,7 @@ export function scoreSession(eventLog, config) {
         totalRejected += 1;
         const code = event.payload.errorCode;
         rejectedByError[code] += 1;
-        if (isPickRejectedEvent(event)) {
+        if (isPickRejectedEvent(eventLog, index)) {
             rejectedPickActions += 1;
         }
         if (CRITICAL_SEQUENCE_CODES.includes(code)) {

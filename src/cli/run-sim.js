@@ -122,18 +122,29 @@ function getLastErrorCode(eventLog) {
     }
     return "none";
 }
+function getRelatedActionType(eventLog, index) {
+    for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+        const type = eventLog[cursor].type;
+        if (type !== "STEP_ACCEPTED" && type !== "STEP_REJECTED" && type !== "ERROR") {
+            return type;
+        }
+    }
+    return null;
+}
 function buildSummaryLines(scenario, eventLog, session) {
     const rejectedByError = new Map();
     const acceptedByType = new Map();
-    eventLog.forEach((event) => {
+    eventLog.forEach((event, index) => {
         if (event.type === "STEP_REJECTED") {
             const code = event.payload.errorCode;
             rejectedByError.set(code, (rejectedByError.get(code) ?? 0) + 1);
             return;
         }
         if (event.type === "STEP_ACCEPTED") {
-            const acceptedType = event.payload.acceptedType;
-            acceptedByType.set(acceptedType, (acceptedByType.get(acceptedType) ?? 0) + 1);
+            const acceptedType = getRelatedActionType(eventLog, index);
+            if (acceptedType !== null) {
+                acceptedByType.set(acceptedType, (acceptedByType.get(acceptedType) ?? 0) + 1);
+            }
         }
     });
     const score = scoreSession(eventLog);

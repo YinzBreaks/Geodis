@@ -9,7 +9,7 @@ function sortUnique(values: readonly string[]): string[] {
 
 describe("contracts sync", () => {
   it("keeps EVENT_TYPES in sync with schema enum", () => {
-    const schemaTypes = eventsSchema.properties.type.enum;
+    const schemaTypes = eventsSchema.$defs?.eventType?.enum ?? eventsSchema.properties.type.enum;
 
     expect(sortUnique([...EVENT_TYPES])).toEqual(sortUnique(schemaTypes));
   });

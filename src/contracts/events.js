@@ -1,4 +1,4 @@
-import eventsSchemaDocument from "../../docs/contracts/events.schema.json";
+import eventsSchemaDocument from "../../docs/contracts/events.schema.json" assert { type: "json" };
 const CANONICAL_EVENT_TYPES = [
     "RF_LOGIN",
     "RF_MENU_SELECT",
@@ -31,7 +31,7 @@ const CANONICAL_EVENT_TYPES = [
     "ERROR"
 ];
 function ensureCanonicalEventTypes() {
-    const enumValues = eventsSchemaDocument.properties.type.enum;
+    const enumValues = resolveEventTypeEnumValues();
     const expected = [...CANONICAL_EVENT_TYPES];
     if (enumValues.length !== expected.length
         || enumValues.some((value) => !expected.includes(value))) {
@@ -39,7 +39,29 @@ function ensureCanonicalEventTypes() {
     }
     return Object.freeze([...enumValues]);
 }
+function resolveEventTypeEnumValues() {
+    const typeNode = eventsSchemaDocument.properties?.type;
+    const inlineEnum = typeNode?.enum;
+    if (Array.isArray(inlineEnum)) {
+        return inlineEnum;
+    }
+    const defsEnum = eventsSchemaDocument.$defs?.eventType?.enum;
+    if (Array.isArray(defsEnum)) {
+        return defsEnum;
+    }
+    throw new Error("docs/contracts/events.schema.json is missing canonical event type enum; checked properties.type.enum and $defs.eventType.enum");
+}
 export const EVENT_TYPES = ensureCanonicalEventTypes();
+function deepFreeze(value) {
+    if (value === null || typeof value !== "object") {
+        return value;
+    }
+    const objectValue = value;
+    for (const key of Object.keys(objectValue)) {
+        deepFreeze(objectValue[key]);
+    }
+    return Object.freeze(value);
+}
 export function createEvent(event) {
     const { eventId, timestamp, type, traineeId, sessionId, payload, cartSessionId, cartId, roundNumber, pickTaskId } = event;
     const base = {
@@ -48,7 +70,7 @@ export function createEvent(event) {
         type,
         traineeId,
         sessionId,
-        payload: Object.freeze({ ...payload })
+        payload: deepFreeze({ ...payload })
     };
     if (cartSessionId !== undefined) {
         base.cartSessionId = cartSessionId;
@@ -62,5 +84,5 @@ export function createEvent(event) {
     if (pickTaskId !== undefined) {
         base.pickTaskId = pickTaskId;
     }
-    return Object.freeze(base);
+    return deepFreeze(base);
 }

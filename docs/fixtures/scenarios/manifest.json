@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "fixtures": [
+    {
+      "id": "scenario.minimal.pick",
+      "label": "Minimal Pick",
+      "scenarioPath": "docs/fixtures/scenarios/scenario.minimal.pick.json"
+    },
+    {
+      "id": "scenario.two-totes.end-of-tote",
+      "label": "Two Totes End Of Tote",
+      "scenarioPath": "docs/fixtures/scenarios/scenario.two-totes.end-of-tote.json"
+    },
+    {
+      "id": "scenario.session.happy",
+      "label": "Session Happy",
+      "scenarioPath": "docs/fixtures/scenarios/scenario.session.happy.json"
+    }
+  ]
+}

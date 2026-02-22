@@ -36,14 +36,14 @@ export function createExceptionsInitialState(initialStableState: string): Except
   };
 }
 
-function accepted(action: AnyEvent, payload: Record<string, unknown> = {}): BaseEvent<"STEP_ACCEPTED"> {
+function accepted(action: AnyEvent): BaseEvent<"STEP_ACCEPTED"> {
   return createEvent({
     eventId: `${action.eventId}:accepted`,
     timestamp: action.timestamp,
     type: "STEP_ACCEPTED",
     traineeId: action.traineeId,
     sessionId: action.sessionId,
-    payload
+    payload: {}
   });
 }
 
@@ -72,7 +72,7 @@ export function exceptionsReducer(state: ExceptionsState, action: AnyEvent): Emi
       history: historyWithAction
     };
 
-    return emitMany(nextState, [action, accepted(action, { revertedTo, stableState: revertedTo })]);
+    return emitMany(nextState, [action, accepted(action)]);
   }
 
   if (action.type === "RF_KEY_CTRL_K") {
@@ -83,7 +83,7 @@ export function exceptionsReducer(state: ExceptionsState, action: AnyEvent): Emi
       type: "EXCEPTION_SHORT_INVENTORY",
       traineeId: action.traineeId,
       sessionId: action.sessionId,
-      payload: { fromPointer: state.scenarioPointer, toPointer: nextPointer }
+      payload: {}
     });
 
     const nextState: ExceptionsState = {
@@ -99,12 +99,13 @@ export function exceptionsReducer(state: ExceptionsState, action: AnyEvent): Emi
         fromPointer: state.scenarioPointer,
         toPointer: nextPointer
       }),
-      accepted(action, { scenarioPointer: nextPointer })
+      accepted(action)
     ]);
   }
 
   if (action.type === "STEP_ACCEPTED") {
-    const stableState = action.payload.stableState;
+    const payload = action.payload as Record<string, unknown>;
+    const stableState = payload.stableState;
     if (typeof stableState === "string" && stableState.length > 0) {
       const shouldAppend = state.stableHistory[state.stableHistory.length - 1] !== stableState;
       const nextStableHistory = shouldAppend ? [...state.stableHistory, stableState] : state.stableHistory;

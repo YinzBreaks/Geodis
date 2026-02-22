@@ -166,11 +166,22 @@ function getLastErrorCode(eventLog: readonly AnyEvent[]): ErrorCode | "none" {
   return "none";
 }
 
+function getRelatedActionType(eventLog: readonly AnyEvent[], index: number): EventType | null {
+  for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+    const type = eventLog[cursor].type;
+    if (type !== "STEP_ACCEPTED" && type !== "STEP_REJECTED" && type !== "ERROR") {
+      return type;
+    }
+  }
+
+  return null;
+}
+
 function buildSummaryLines(scenario: Scenario, eventLog: readonly AnyEvent[], session: ReturnType<typeof createSession>): string[] {
   const rejectedByError = new Map<ErrorCode, number>();
   const acceptedByType = new Map<EventType, number>();
 
-  eventLog.forEach((event) => {
+  eventLog.forEach((event, index) => {
     if (event.type === "STEP_REJECTED") {
       const code = event.payload.errorCode;
       rejectedByError.set(code, (rejectedByError.get(code) ?? 0) + 1);
@@ -178,8 +189,10 @@ function buildSummaryLines(scenario: Scenario, eventLog: readonly AnyEvent[], se
     }
 
     if (event.type === "STEP_ACCEPTED") {
-      const acceptedType = event.payload.acceptedType;
-      acceptedByType.set(acceptedType, (acceptedByType.get(acceptedType) ?? 0) + 1);
+      const acceptedType = getRelatedActionType(eventLog, index);
+      if (acceptedType !== null) {
+        acceptedByType.set(acceptedType, (acceptedByType.get(acceptedType) ?? 0) + 1);
+      }
     }
   });
 

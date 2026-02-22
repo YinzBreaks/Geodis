@@ -1,5 +1,5 @@
-import eventsSchemaDocument from "../../docs/contracts/events.schema.json";
-import type { ErrorCode } from "./errors";
+import eventsSchemaDocument from "../../docs/contracts/events.schema.json" assert { type: "json" };
+import type { ErrorCode } from "./errors.js";
 
 const CANONICAL_EVENT_TYPES = [
   "RF_LOGIN",
@@ -34,7 +34,7 @@ const CANONICAL_EVENT_TYPES = [
 ] as const;
 
 function ensureCanonicalEventTypes(): readonly string[] {
-  const enumValues = eventsSchemaDocument.properties.type.enum;
+  const enumValues = resolveEventTypeEnumValues();
   const expected = [...CANONICAL_EVENT_TYPES];
 
   if (
@@ -45,6 +45,28 @@ function ensureCanonicalEventTypes(): readonly string[] {
   }
 
   return Object.freeze([...enumValues]);
+}
+
+function resolveEventTypeEnumValues(): readonly string[] {
+  const typeNode = (eventsSchemaDocument as {
+    properties?: { type?: { enum?: unknown; $ref?: unknown } };
+    $defs?: { eventType?: { enum?: unknown } };
+  }).properties?.type;
+  const inlineEnum = typeNode?.enum;
+  if (Array.isArray(inlineEnum)) {
+    return inlineEnum;
+  }
+
+  const defsEnum = (eventsSchemaDocument as {
+    $defs?: { eventType?: { enum?: unknown } };
+  }).$defs?.eventType?.enum;
+  if (Array.isArray(defsEnum)) {
+    return defsEnum;
+  }
+
+  throw new Error(
+    "docs/contracts/events.schema.json is missing canonical event type enum; checked properties.type.enum and $defs.eventType.enum"
+  );
 }
 
 export type EventType = (typeof CANONICAL_EVENT_TYPES)[number];
@@ -64,7 +86,7 @@ export type KeyPayloads = {
 
 export type EventPayload<T extends EventType> = T extends keyof KeyPayloads
   ? KeyPayloads[T]
-  : Record<string, unknown>;
+  : Record<string, never>;
 
 export type BaseEvent<T extends EventType = EventType> = {
   eventId: string;
@@ -80,6 +102,19 @@ export type BaseEvent<T extends EventType = EventType> = {
 };
 
 export type AnyEvent = BaseEvent<EventType>;
+
+function deepFreeze<T>(value: T): T {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+
+  const objectValue = value as Record<string, unknown>;
+  for (const key of Object.keys(objectValue)) {
+    deepFreeze(objectValue[key]);
+  }
+
+  return Object.freeze(value);
+}
 
 export function createEvent<T extends EventType>(event: BaseEvent<T>): Readonly<BaseEvent<T>> {
   const {
@@ -101,7 +136,7 @@ export function createEvent<T extends EventType>(event: BaseEvent<T>): Readonly<
     type,
     traineeId,
     sessionId,
-    payload: Object.freeze({ ...payload }) as EventPayload<T>
+    payload: deepFreeze({ ...payload }) as EventPayload<T>
   };
 
   if (cartSessionId !== undefined) {
@@ -120,5 +155,5 @@ export function createEvent<T extends EventType>(event: BaseEvent<T>): Readonly<
     base.pickTaskId = pickTaskId;
   }
 
-  return Object.freeze(base);
+  return deepFreeze(base);
 }

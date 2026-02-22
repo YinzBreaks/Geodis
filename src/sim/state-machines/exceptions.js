@@ -16,14 +16,14 @@ export function createExceptionsInitialState(initialStableState) {
         history: []
     };
 }
-function accepted(action, payload = {}) {
+function accepted(action) {
     return createEvent({
         eventId: `${action.eventId}:accepted`,
         timestamp: action.timestamp,
         type: "STEP_ACCEPTED",
         traineeId: action.traineeId,
         sessionId: action.sessionId,
-        payload
+        payload: {}
     });
 }
 function errorFrom(action, errorCode, details) {
@@ -47,7 +47,7 @@ export function exceptionsReducer(state, action) {
             stableHistory: nextHistory,
             history: historyWithAction
         };
-        return emitMany(nextState, [action, accepted(action, { revertedTo, stableState: revertedTo })]);
+        return emitMany(nextState, [action, accepted(action)]);
     }
     if (action.type === "RF_KEY_CTRL_K") {
         const nextPointer = state.scenarioPointer + 1;
@@ -57,7 +57,7 @@ export function exceptionsReducer(state, action) {
             type: "EXCEPTION_SHORT_INVENTORY",
             traineeId: action.traineeId,
             sessionId: action.sessionId,
-            payload: { fromPointer: state.scenarioPointer, toPointer: nextPointer }
+            payload: {}
         });
         const nextState = {
             ...state,
@@ -71,11 +71,12 @@ export function exceptionsReducer(state, action) {
                 fromPointer: state.scenarioPointer,
                 toPointer: nextPointer
             }),
-            accepted(action, { scenarioPointer: nextPointer })
+            accepted(action)
         ]);
     }
     if (action.type === "STEP_ACCEPTED") {
-        const stableState = action.payload.stableState;
+        const payload = action.payload;
+        const stableState = payload.stableState;
         if (typeof stableState === "string" && stableState.length > 0) {
             const shouldAppend = state.stableHistory[state.stableHistory.length - 1] !== stableState;
             const nextStableHistory = shouldAppend ? [...state.stableHistory, stableState] : state.stableHistory;

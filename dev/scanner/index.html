@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GEODIS Simulator Playground [DEV]</title>
+    <!--
+      DEV ONLY — not for production.
+
+      How to open:
+        npx serve .           (from repo root)       → http://localhost:3000/dev/scanner/
+        npx http-server .     (from repo root)       → http://127.0.0.1:8080/dev/scanner/
+
+      The page must be served so that window.location.pathname is "/dev/scanner"
+      or "/dev/scanner/" — any trailing slash is normalised by routes.ts.
+
+      NOTE: This file loads src/ui/dev/bootstrap.js as a bare ESM module chain.
+      Dynamic JSON imports (e.g. events.schema.json) require the Import Maps or
+      a bundler when served in browsers that enforce MIME types on JSON.
+      For an unbundled quick-start, serve with a tool that sets
+      Content-Type: application/json for .json files (e.g. `npx serve`).
+    -->
+    <style>
+      body { font-family: sans-serif; margin: 0; padding: 1rem; background: #111; color: #eee; }
+    </style>
+  </head>
+  <body>
+    <!--
+      routes.ts will locate or create [data-testid="dev-scanner-route-host"].
+      Providing it here gives the router a stable anchor and avoids body.appendChild.
+    -->
+    <div data-testid="dev-scanner-route-host"></div>
+
+    <script type="module" src="../../src/ui/dev/bootstrap.js"></script>
+  </body>
+</html>

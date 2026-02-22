@@ -14,9 +14,10 @@ function validateEmittedEventsOrThrow(events: readonly AnyEvent[]): void {
 }
 
 function isAcceptedScanToteVerify(events: readonly AnyEvent[]): boolean {
-  return events.some(
-    (event) => event.type === "STEP_ACCEPTED" && event.payload.acceptedType === "SCAN_TOTE_VERIFY"
-  );
+  const hasAccepted = events.some((event) => event.type === "STEP_ACCEPTED");
+  const hasScanToteVerify = events.some((event) => event.type === "SCAN_TOTE_VERIFY");
+
+  return hasAccepted && hasScanToteVerify;
 }
 
 export function applyAction(session: SessionState, action: AnyEvent): SessionState {

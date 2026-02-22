@@ -10,7 +10,7 @@ function accepted(action) {
         type: "STEP_ACCEPTED",
         traineeId: action.traineeId,
         sessionId: action.sessionId,
-        payload: { acceptedType: action.type }
+        payload: {}
     });
 }
 function rejected(action, code, details) {

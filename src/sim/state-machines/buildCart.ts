@@ -39,7 +39,7 @@ function accepted(action: AnyEvent): BaseEvent<"STEP_ACCEPTED"> {
     type: "STEP_ACCEPTED",
     traineeId: action.traineeId,
     sessionId: action.sessionId,
-    payload: { acceptedType: action.type }
+    payload: {}
   });
 }
 

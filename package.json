@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "sim": "npx --yes tsx src/cli/run-sim.ts",
-    "test": "vitest run",
+    "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest",
     "lint:contracts": "node scripts/validate-contracts.mjs",
     "ci": "npm run lint:contracts && npm run test"

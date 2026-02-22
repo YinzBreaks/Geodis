@@ -2,12 +2,8 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://geodis.example/schema/events.schema.json",
   "title": "GEODIS Picker Training - Event Schema",
-  "type": "object",
-  "required": ["eventId", "timestamp", "type", "traineeId", "sessionId", "payload"],
-  "properties": {
-    "eventId": { "type": "string", "minLength": 8 },
-    "timestamp": { "type": "string", "format": "date-time" },
-    "type": {
+  "$defs": {
+    "eventType": {
       "type": "string",
       "enum": [
         "RF_LOGIN",
@@ -46,6 +42,18 @@
         "ERROR"
       ]
     },
+    "emptyPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    }
+  },
+  "type": "object",
+  "required": ["eventId", "timestamp", "type", "traineeId", "sessionId", "payload"],
+  "properties": {
+    "eventId": { "type": "string", "minLength": 8 },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "type": { "$ref": "#/$defs/eventType" },
     "traineeId": { "type": "string", "minLength": 1 },
     "sessionId": { "type": "string", "minLength": 1 },
 
@@ -60,28 +68,63 @@
 
   "allOf": [
     {
+      "if": { "properties": { "type": { "const": "RF_LOGIN" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
       "if": { "properties": { "type": { "const": "RF_MENU_SELECT" } } },
       "then": {
-        "properties": { "payload": { "required": ["value"], "properties": { "value": { "type": "string" } } } }
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value"],
+            "properties": { "value": { "type": "string" } }
+          }
+        }
       }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_KEY_CTRL_T" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_TASK_GROUP_SET" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
     },
     {
       "if": { "properties": { "type": { "const": "RF_ZONE_SELECTED" } } },
       "then": {
         "properties": {
-          "payload": { "required": ["zoneOrTaskGroupCode"], "properties": { "zoneOrTaskGroupCode": { "type": "string" } } }
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["zoneOrTaskGroupCode"],
+            "properties": { "zoneOrTaskGroupCode": { "type": "string" } }
+          }
         }
       }
     },
     {
       "if": { "properties": { "type": { "const": "SCAN_CART_LABEL" } } },
-      "then": { "properties": { "payload": { "required": ["barcode"], "properties": { "barcode": { "type": "string" } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["barcode"],
+            "properties": { "barcode": { "type": "string" } }
+          }
+        }
+      }
     },
     {
       "if": { "properties": { "type": { "const": "SCAN_TOTE_ASSIGN" } } },
       "then": {
         "properties": {
           "payload": {
+            "type": "object",
+            "additionalProperties": false,
             "required": ["barcode", "slotIndex"],
             "properties": {
               "barcode": { "type": "string" },
@@ -92,24 +135,143 @@
       }
     },
     {
+      "if": { "properties": { "type": { "const": "RF_KEY_CTRL_E" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "PICK_ASSIGN" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "ARRIVE_LOCATION" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
       "if": { "properties": { "type": { "const": "SCAN_ITEM" } } },
-      "then": { "properties": { "payload": { "required": ["barcode"], "properties": { "barcode": { "type": "string" } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["barcode"],
+            "properties": { "barcode": { "type": "string" } }
+          }
+        }
+      }
     },
     {
       "if": { "properties": { "type": { "const": "ENTER_QUANTITY" } } },
-      "then": { "properties": { "payload": { "required": ["quantity"], "properties": { "quantity": { "type": "integer", "minimum": 0 } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["quantity"],
+            "properties": { "quantity": { "type": "integer", "minimum": 0 } }
+          }
+        }
+      }
     },
     {
       "if": { "properties": { "type": { "const": "SCAN_TOTE_VERIFY" } } },
-      "then": { "properties": { "payload": { "required": ["barcode"], "properties": { "barcode": { "type": "string" } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["barcode"],
+            "properties": { "barcode": { "type": "string" } }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_END_OF_TOTE_SHOWN" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_KEY_CTRL_A" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "TOTE_PLACED_ON_CONVEYOR" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_KEY_CTRL_W" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "RF_KEY_CTRL_K" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_TOTE_ALLOCATED" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_CART_ALREADY_CREATED" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_INCORRECT_LOCATION" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_INCORRECT_TOTE" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_INVALID_ITEM_LAST" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_INVALID_ITEM_NOT_LAST" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_SHORT_INVENTORY" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "EXCEPTION_DAMAGED_ITEM" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "STEP_ACCEPTED" } } },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/emptyPayload" } } }
     },
     {
       "if": { "properties": { "type": { "const": "STEP_REJECTED" } } },
-      "then": { "properties": { "payload": { "required": ["errorCode"], "properties": { "errorCode": { "type": "string" } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["errorCode"],
+            "properties": {
+              "errorCode": { "type": "string" },
+              "rejectedType": { "$ref": "#/$defs/eventType" }
+            }
+          }
+        }
+      }
     },
     {
       "if": { "properties": { "type": { "const": "ERROR" } } },
-      "then": { "properties": { "payload": { "required": ["errorCode"], "properties": { "errorCode": { "type": "string" }, "details": { "type": "object" } } } } }
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["errorCode"],
+            "properties": {
+              "errorCode": { "type": "string" },
+              "details": { "type": "object", "additionalProperties": true }
+            }
+          }
+        }
+      }
     }
   ]
 }
